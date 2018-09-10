@@ -1,8 +1,7 @@
 var webpack = require('webpack');
-var path = require('path')
+var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-var uglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 var HtmlWebpackConfig = {
   title: 'hexo',
@@ -26,6 +25,7 @@ var HtmlWebpackConfig = {
 
 module.exports = {
   entry: [
+    "@babel/polyfill",
     "./src/example.ts"
   ],
   output: {
@@ -41,8 +41,10 @@ module.exports = {
       __DEV__: false
     }),
     new HtmlWebpackPlugin(HtmlWebpackConfig),
-    new webpack.optimize.UglifyJsPlugin({ sourceMap: true }),
-    new BundleAnalyzerPlugin()
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      openAnalyzer: true
+    })
   ],
 
   resolve: {
@@ -55,10 +57,10 @@ module.exports = {
         test: /\.ts?$/,
         use: [
           {
-            loader: "awesome-typescript-loader",
-            options: {
-              useBabel: true
-            }
+            loader: "babel-loader",
+          },
+          {
+            loader: "ts-loader",
           }
         ]
       },
@@ -75,5 +77,8 @@ module.exports = {
         use: [{ loader: 'source-map-loader' }]
       }
     ]
+  },
+  optimization: {
+    minimize: true
   }
 }

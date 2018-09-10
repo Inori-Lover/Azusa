@@ -1,9 +1,8 @@
-var webpack = require('webpack');
-var path = require('path')
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var uglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
+const webpack = require('webpack');
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-var HtmlWebpackConfig = {
+const HtmlWebpackConfig = {
     title: 'azusa',
     filename: 'index.html',
     template: "./src/index.html",
@@ -13,6 +12,7 @@ var HtmlWebpackConfig = {
 
 module.exports = {
     entry: [
+        "@babel/polyfill",
         "./src/example.ts"
     ],
     output: {
@@ -36,13 +36,13 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.ts?$/,
+                test: /\.ts$/,
                 use: [
                     {
-                        loader: "awesome-typescript-loader",
-                        options: {
-                            useBabel: true
-                        }
+                        loader: 'babel-loader'
+                    },
+                    {
+                        loader: "ts-loader",
                     }
                 ]
             },
