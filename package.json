@@ -4,10 +4,11 @@
   "description": "",
   "main": "./lib/azusa.js",
   "scripts": {
-    "clean": "rimraf example",
-    "start": "webpack-dev-server --inline --hot --progress",
-    "dev": "npm run start",
-    "build": "webpack --config webpack.config.prod.js"
+    "clean": "rimraf lib && rimraf example",
+    "start": "webpack-dev-server --config webpack.config.js",
+    "build": "npm run build:m",
+    "build:m": "rimraf lib && webpack --config webpack.config.module.js",
+    "build:e": "rimraf example && webpack --config webpack.config.example.js && webpack-dev-server --config webpack.config.example.js"
   },
   "author": "EYHN",
   "license": "GPL-2.0",
@@ -19,7 +20,9 @@
     "@types/node": "^10.9.4",
     "@types/three": "^0.92.18",
     "babel-loader": "^8.0.2",
+    "declaration-bundler-webpack-plugin": "^1.0.3",
     "file-loader": "^2.0.0",
+    "fork-ts-checker-webpack-plugin": "^0.4.9",
     "html-webpack-plugin": "^3.2.0",
     "rimraf": "^2.6.1",
     "source-map-loader": "^0.2.4",
@@ -35,5 +38,9 @@
   "dependencies": {
     "three": "^0.96.0"
   },
-  "typings": "./lib/azusa.d.ts"
+  "types": "./lib/azusa.d.ts",
+  "typings": "./lib/azusa.d.ts",
+  "browserslist": [
+    "last 2 chrome version"
+  ]
 }

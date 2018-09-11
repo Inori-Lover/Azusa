@@ -1,13 +1,9 @@
-import * as THREE from 'three'
 import { Vector2 } from 'three'
 
 export class node {
   baseRange: number;
   angle: number;
   center: Vector2;
-  private lastStrength: number;
-  private theStrength: number
-  private targetRange: number;
   private _range: number = 0;
   constructor(baseRange: number, angle: number, center: Vector2) {
     this.baseRange = baseRange;
@@ -27,10 +23,10 @@ export class node {
     return new Vector2(this.center.x + x, this.center.y + y);
   }
   public set strength(newStrength: number) {
-    this.lastStrength = this.theStrength;
-    this.theStrength = newStrength;
-    this.targetRange = Math.max(this.theStrength - this.lastStrength, 0);
-    if (this.targetRange > this._range) this._range = this.targetRange;
+    const theStrength = newStrength;
+    const lastStrength = theStrength;
+    const targetRange = Math.max(theStrength - lastStrength, 0);
+    if (targetRange > this._range) this._range = targetRange;
   }
   public transition(delay: number) {
     this._range = Math.max(this._range - delay * this._range * 5, 0);
