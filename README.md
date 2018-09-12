@@ -31,8 +31,13 @@ const azusa = new Azusa({
   cutEnd: 256
 });
 
-azusa.audio.load(testSound, undefined, (xhr: any) => {
-  console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+azusa.audio.load({
+  src: testSound,
+  onLoad: (buffer: THREE.AudioBuffer) => {
+    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+  },
+  onPrgress: (xhr: ProgressEvent) => {},
+  onError: () => {}
 });
 
 azusa.audio.Volume = 0.5;
