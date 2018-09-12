@@ -5,6 +5,7 @@
 [![QQ](https://img.shields.io/badge/QQ-1106996185-blue.svg?style=flat-square)](http://wpa.qq.com/msgrd?v=3&uin=&site=qq&menu=yes)
 [![Email](https://img.shields.io/badge/Emali%20me-cneyhn@gmail.com-green.svg?style=flat-square)]()
 [![npm version](https://badge.fury.io/js/azusa.svg)](https://badge.fury.io/js/azusa)
+[![dependency](https://img.shields.io/badge/dependency-threejs-blue.svg?style=flat-square)](https://threejs.org/)
 
 ![](./azusa.jpg)
 
@@ -24,7 +25,7 @@ A WEBGL Audio Spectrum Music Visualizer.
 
 # example
 
-## typescript
+## typescript from src
 ```typescript
 const azusa = new Azusa({
   view: document.getElementById('app') as HTMLCanvasElement,
