@@ -3,7 +3,6 @@ import { Triangle } from './Triangle';
 import { range } from './util/range';
 import { node } from './node';
 import { Audio } from './audio';
-import { EventEmitter } from 'events';
 import THREE from './lib/ExtendThree';
 
 import './lib/LuminosityHighPassShader.js';
@@ -22,7 +21,7 @@ export interface IAzusaOption {
   cutFront?: number;
 }
 
-export default class Azusa extends EventEmitter {
+export class Azusa {
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
   private scene: THREE.Scene;
@@ -41,7 +40,6 @@ export default class Azusa extends EventEmitter {
   private Triangles: Triangle[] = [];
   public audio: Audio;
   constructor(option: IAzusaOption = {}) {
-    super();
     const {
       width = window.innerWidth,
       height = window.innerHeight,
@@ -265,3 +263,5 @@ export default class Azusa extends EventEmitter {
     requestAnimationFrame(this.render.bind(this));
   }
 }
+
+export default Azusa

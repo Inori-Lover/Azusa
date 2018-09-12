@@ -14,12 +14,15 @@ module.exports = {
 
   entry: {
     "azusa": "./src/azusa.ts",
-    "azusa.min": "./src/azusa.ts"
+    "azusa.min": "./src/azusa.ts",
+    "azusa.es": "./src/azusa.ts"
   },
 
   output: {
     filename: "[name].js",
-    path: __dirname + "/lib"
+    path: __dirname + "/lib",
+    libraryTarget: 'umd',
+    umdNamedDefine: true,
   },
 
     externals: {

@@ -24,7 +24,8 @@ A WEBGL Audio Spectrum Music Visualizer.
 
 # example
 
-```
+## typescript
+```typescript
 const azusa = new Azusa({
   view: document.getElementById('app') as HTMLCanvasElement,
   subdivisionSize: 1024,
@@ -45,6 +46,40 @@ azusa.audio.Volume = 0.5;
 window.addEventListener('resize', () => {
   azusa.resize(window.innerWidth, window.innerHeight);
 })
+```
+
+## umd
+```html
+<div id="bg"></div>
+<canvas id="app"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/three"></script>
+<script src="./lib/azusa.min.js"></script>
+<script>
+
+  const azusa = new Azusa({
+    view: document.getElementById('app'),
+    subdivisionSize: 1024,
+    cutEnd: 256
+  });
+
+  azusa.audio.load({
+    src: './example/media/cha.mp3',
+    onPrgress: (xhr) => {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    }
+  });
+
+  azusa.audio.setVolume(0.5);
+
+  window.addEventListener('resize', () => {
+    azusa.resize(window.innerWidth, window.innerHeight);
+  })
+
+  const container = document.getElementById('bg')
+  container && (container.style.backgroundImage = "url(./example/media/9s.jpg)")
+
+</script>
 ```
 
 [Click here to demo](https://eyhn.github.io/Azusa/example)

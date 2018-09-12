@@ -109,7 +109,7 @@ module.exports = {
                       exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/],
                       loader: require.resolve('file-loader'),
                       options: {
-                        name: 'media/[name].[hash:8].[ext]',
+                        name: 'media/[name].[ext]',
                       },
                   },
               ]
