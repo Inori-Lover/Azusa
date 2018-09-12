@@ -98,6 +98,6 @@ module.exports = {
 		port: process.env.PORT || 8888,
 		contentBase: "/",
 		historyApiFallback: true,
-		open: false
+		open: true
 	}
 }
