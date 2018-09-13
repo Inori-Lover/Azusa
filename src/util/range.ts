@@ -1,4 +1,4 @@
-export function range(start: number, end: number, step: number = 1, fromRight: boolean = false) {
+export function range(start: number, end: number, step: number = 1, fromRight: boolean = false): number[] {
   var index = -1,
     length = Math.max(Math.ceil((end - start) / step), 0),
     result = Array(length);

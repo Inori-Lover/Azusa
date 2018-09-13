@@ -2,7 +2,7 @@ import { randomRange } from './util/randomRange';
 import { Triangle } from './Triangle';
 import { range } from './util/range';
 import { node } from './node';
-import { Audio } from './audio';
+import { Audio, loadOption as musicOption } from './audio';
 import THREE from './lib/ExtendThree';
 
 import './lib/LuminosityHighPassShader.js';
@@ -12,177 +12,164 @@ import './lib/RenderPass.js';
 import './lib/ShaderPass.js';
 import './lib/UnrealBloomPass';
 
-export interface IAzusaOption {
-  view?: HTMLCanvasElement;
-  width?: number;
-  height?: number;
-  subdivisionSize?: number;
-  cutEnd?: number;
-  cutFront?: number;
+interface AzusaOption {
+  view: HTMLCanvasElement;
+  width: number;
+  height: number;
+  subdivisionSize: number;
+  cutEnd: number;
+  cutFront: number;
+  music: musicOption;
+}
+export interface ExportedAzusaOption extends Partial<AzusaOption> {
+  view: HTMLCanvasElement;
+  music: musicOption;
+}
+
+class Line extends THREE.Line{
+  constructor (vertices: THREE.Vector2[], lineMaterial:THREE.LineBasicMaterial) {
+
+    const line = new THREE.BufferGeometry()
+    line.addAttribute('position', Line.creatBufferAttribute(vertices).setDynamic(true))
+
+    super(line, lineMaterial)
+  }
+
+  static creatBufferAttribute(vertices: THREE.Vector2[]) {
+    const res: number[] = [];
+    vertices = vertices.concat(vertices[0])
+    vertices.forEach((value) => {
+      res.push(value.x, value.y, 0);
+    })
+    return new THREE.BufferAttribute(new Float32Array(res), 3);
+  }
 }
 
 export class Azusa {
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
-  private scene: THREE.Scene;
+  private composer: THREE.EffectComposer;
+  private bloomPass: THREE.UnrealBloomPass;
+  private clock: THREE.Clock = new THREE.Clock();
   private lines: THREE.Line[];
   private lineA: THREE.Line;
   private lineB: THREE.Line;
-  private nodes: node[];
-  private clock: THREE.Clock;
-  private scale: number = 1;
-  private lineGroup: THREE.Group;
-  private composer: THREE.EffectComposer;
-  private bloomPass: any;
-  private cutFront: number;
-  private cutEnd: number;
   private TriangleGroup: THREE.Group;
+  private lineGroup: THREE.Group;
+  private material = new THREE.MeshBasicMaterial({ color: 0x03a9f4 });
+  private lineMaterial = new THREE.LineBasicMaterial({ color: 0x03a9f4 });
+
+  private audio: Audio;
+  private nodes: node[];
+  private scale: number = 1;
   private Triangles: Triangle[] = [];
-  public audio: Audio;
-  constructor(option: IAzusaOption = {}) {
+  private option:AzusaOption;
+
+  constructor(_option: ExportedAzusaOption) {
+
+    const option: AzusaOption = Object.assign({
+      width: window.innerWidth,
+      height: window.innerHeight,
+      subdivisionSize: 1024,
+      cutFront: 0,
+      cutEnd: 0
+    }, _option)
+
     const {
+      view,
       width = window.innerWidth,
       height = window.innerHeight,
       subdivisionSize = 1024,
       cutFront = 0,
       cutEnd = 0
     } = option;
-    this.cutFront = cutFront;
-    this.cutEnd = cutEnd;
+
     const renderer = new THREE.WebGLRenderer({
-      canvas: option.view,
+      canvas: view,
       alpha: true,
       antialias: true
     });
     renderer.setSize(width, height);
 
+    const scene = new THREE.Scene();
+
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 500);
     camera.position.set(0, 0, 100);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-    const scene = new THREE.Scene();
-
-    this.composer = new THREE.EffectComposer(renderer)
-    this.composer.setSize(width, height);
+    const composer = new THREE.EffectComposer(renderer)
+    composer.setSize(width, height);
     const renderScene = new THREE.RenderPass(scene, camera)
-    this.composer.addPass(renderScene);
+    composer.addPass(renderScene);
     this.bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.2, 0);
-    this.composer.addPass(this.bloomPass);
+    composer.addPass(this.bloomPass);
     const copyShader = new THREE.ShaderPass(THREE.CopyShader);
     copyShader.renderToScreen = true;
-    this.composer.addPass(copyShader);
+    composer.addPass(copyShader);
 
-    this.scene = scene;
-    this.camera = camera;
+    const audio = new Audio({ fftsize: subdivisionSize })
+    this.loadAudio(camera, audio)
 
-
-    this.audio = new Audio({ fftsize: subdivisionSize });
-    const frequencyBinCount = this.loadAudio(subdivisionSize).frequencyBinCount;
-
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x03a9f4 });
+    const frequencyBinCount = audio.frequencyBinCount;
 
     const nodeCount = frequencyBinCount - cutEnd - cutFront
-    this.nodes = range(0, nodeCount).map((index) => {
-      return new node(20, (index / nodeCount * 360 + 45) % 360, new THREE.Vector2(0, 0));
+    const nodes = range(0, nodeCount).map(item => {
+      return new node(20, (item / nodeCount * 360 + 45) % 360, new THREE.Vector2(0, 0));
     })
 
-    this.lineA = new THREE.Line(
-      new THREE.BufferGeometry().addAttribute('position',
-        this.renderGeometries(
-          this.nodes.map(node => node.positionA)
-        ).setDynamic(true))
-      , lineMaterial);
+    const lineGroup = new THREE.Group();
+    const { lineA, lineB, lines } = this.loadLine(nodes);
+    lineGroup.add(lineA);
+    lineGroup.add(lineB);
+    lines.forEach(line => lineGroup.add(line));
+    scene.add(lineGroup);
 
-    this.lineB = new THREE.Line(
-      new THREE.BufferGeometry().addAttribute('position',
-        this.renderGeometries(
-          this.nodes.map(node => node.positionB)
-        ).setDynamic(true))
-      , lineMaterial);
+    const { TriangleGroup } = this.loadTriangle();
+    scene.add(TriangleGroup);
 
+    this.audio = audio;
 
-    this.lines = range(0, nodeCount).map((index) => {
-      return new THREE.Line(
-        new THREE.BufferGeometry().addAttribute('position',
-          this.renderGeometries(
-            [this.nodes[index].positionA, this.nodes[index].positionB]
-          ).setDynamic(true))
-        , lineMaterial);
-    })
-    this.lineGroup = this.loadLine();
-
-    this.TriangleGroup = this.loadTriangle();
-
-    this.scene.add(this.TriangleGroup);
-    this.scene.add(this.lineGroup);
     this.renderer = renderer;
-    this.clock = new THREE.Clock();
+    this.composer = composer;
+    this.camera = camera;
+    this.nodes = nodes;
+    this.lineA = lineA;
+    this.lineB = lineB;
+    this.lines = lines;
+    this.TriangleGroup = TriangleGroup;
+    this.lineGroup = lineGroup;
+
+    this.option = option;
+
+    this.loadMusic()
     this.render();
     this.resize(width, height);
   }
 
-  loadGui() {
-    const params = {
-      projection: 'normal',
-      background: false,
-      exposure: 1.0,
-      bloomStrength: 1.5,
-      bloomThreshold: 0.2,
-      bloomRadius: 0
-    };
-    const gui = new (window as any).dat.GUI();
-    gui.add(params, 'exposure', 0.1, 2);
-    gui.add(params, 'bloomThreshold', 0.0, 1.0).onChange((value: any) => {
-      this.bloomPass.threshold = Number(value);
-    });
-    gui.add(params, 'bloomStrength', 0.0, 3.0).onChange((value: any) => {
-      this.bloomPass.strength = Number(value);
-    });
-    gui.add(params, 'bloomRadius', 0.0, 1.0).onChange((value: any) => {
-      this.bloomPass.radius = Number(value);
-    });
-    gui.open();
+  private loadLine = (nodes: node[]) => {
+    const lineMaterial = this.lineMaterial
+    const lineA = new Line(nodes.map(node => node['positionA']), lineMaterial);
+    const lineB = new Line(nodes.map(node => node['positionB']), lineMaterial);
+    const lines: Line[] = range(0, nodes.length).map(item => {
+      return new Line([nodes[item].positionA, nodes[item].positionB], lineMaterial);
+    })
+
+    return { lineA, lineB, lines };
   }
 
-  resize(width: number, height: number) {
-    this.camera.aspect = width / height;
-    if (width <= 425) {
-      this.camera.fov = 70;
-    } else {
-      this.camera.fov = 45;
-    }
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(width, height);
-    this.composer.setSize(width, height);
+  private loadAudio = (camera: THREE.PerspectiveCamera, audio: Audio) => {
+    camera.add(audio.listener);
   }
 
-  private loadLine() {
-
-    const lineGroup = new THREE.Group();
-    lineGroup.add(this.lineB);
-    lineGroup.add(this.lineA);
-
-    this.lines.forEach(line => lineGroup.add(line));
-    return lineGroup;
-  }
-
-  private loadAudio(fftsize: number) {
-    this.camera.add(this.audio.listener);
-    return this.audio;
-  }
-
-  private loadTriangle() {
+  private loadTriangle = () => {
     const TriangleGroup = new THREE.Group();
-    const material = new THREE.MeshBasicMaterial({ color: 0x03a9f4 });
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x03a9f4 });
-    setInterval(this.addTriangle.bind(this, material, lineMaterial), 500);
-    return TriangleGroup;
+    setInterval(() => requestAnimationFrame(this.addTriangle), 500);
+    return { TriangleGroup };
   }
 
-  private addTriangle(
-    material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({ color: 0x03a9f4 }),
-    lineMaterial: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0x03a9f4 })) {
-    // const point = this.Triangles.length;
+  private addTriangle = () => {
+    const material = this.material
+    const lineMaterial = this.lineMaterial
     const triangle = this.makeTriangle(material, lineMaterial, (t) => {
       this.Triangles = this.Triangles.filter((triangle) => {
         return triangle !== t;
@@ -193,10 +180,10 @@ export class Azusa {
     this.Triangles.push(triangle);
   }
 
-  private makeTriangle(
+  private makeTriangle = (
     material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({ color: 0x03a9f4 }),
     lineMaterial: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0x03a9f4 }),
-    cb: (t: Triangle) => void) {
+    cb: (t: Triangle) => void) => {
     const triangle = new Triangle(2, new THREE.Vector3(0, 0, 0), Math.random() * 360, randomRange(5, 1), randomRange(0.1, 0.02), material, lineMaterial, {
       startShow: 15,
       endShow: 30,
@@ -206,16 +193,7 @@ export class Azusa {
     return triangle;
   }
 
-  private renderGeometries(vertices: THREE.Vector2[]) {
-    const res: number[] = [];
-    vertices = vertices.concat(vertices[0])
-    vertices.forEach((value) => {
-      res.push(value.x, value.y, 0);
-    })
-    return new THREE.BufferAttribute(new Float32Array(res), 3);
-  }
-
-  private updateGeometries() {
+  private updateGeometries = () => {
     if (this.nodes) {
       this.lineGroup.scale.set(this.scale, this.scale, this.scale);
       const geometryA = this.lineA.geometry as THREE.BufferGeometry;
@@ -244,23 +222,68 @@ export class Azusa {
     }
   }
 
-  private render() {
+  private render = () => {
     this.composer.render();
-    let audioDate = this.audio.getFrequencyData()
-    const Delta = this.clock.getDelta();
-    const cutAudioDate = audioDate.slice(this.cutFront, audioDate.length - this.cutEnd)
-    this.nodes.forEach((node, index, array) => {
-      node.strength = cutAudioDate[(index) % array.length] * 0.1;
-      node.transition(Delta);
-    })
+    {
+      let audioDate = this.audio.getFrequencyData()
+      const Delta = this.clock.getDelta();
+      const cutAudioDate = audioDate.slice(this.option.cutFront, audioDate.length - this.option.cutEnd)
+      this.nodes.forEach((node, index, array) => {
+        node.strength = cutAudioDate[(index) % array.length] * 0.1;
+        node.transition(Delta);
+      })
 
-    this.scale = 1 + audioDate[Math.ceil(audioDate.length * 0.05)] / 1000;
-    this.updateGeometries();
-    this.Triangles.forEach(triangle => triangle.transition(Delta));
+      this.scale = 1 + audioDate[Math.ceil(audioDate.length * 0.05)] / 1000;
+      this.updateGeometries();
+      this.Triangles.forEach(triangle => triangle.transition(Delta));
+    }
     // geometries.forEach((geometry, index) => {
     //   this.lines[index].geometry = geometry
     // });
-    requestAnimationFrame(this.render.bind(this));
+    requestAnimationFrame(this.render);
+  }
+
+  public loadGui = () => {
+    const params = {
+      projection: 'normal',
+      background: false,
+      exposure: 1.0,
+      bloomStrength: 1.5,
+      bloomThreshold: 0.2,
+      bloomRadius: 0
+    };
+    const gui = new (window as any).dat.GUI();
+    gui.add(params, 'exposure', 0.1, 2);
+    gui.add(params, 'bloomThreshold', 0.0, 1.0).onChange((value: any) => {
+      this.bloomPass['threshold'] = Number(value);
+    });
+    gui.add(params, 'bloomStrength', 0.0, 3.0).onChange((value: any) => {
+      this.bloomPass['strength'] = Number(value);
+    });
+    gui.add(params, 'bloomRadius', 0.0, 1.0).onChange((value: any) => {
+      this.bloomPass['radius'] = Number(value);
+    });
+    gui.open();
+  }
+
+  public resize = (width: number, height: number) => {
+    this.camera.aspect = width / height;
+    if (width <= 425) {
+      this.camera.fov = 70;
+    } else {
+      this.camera.fov = 45;
+    }
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+    this.composer.setSize(width, height);
+  }
+
+  public getAudioElement = (): HTMLAudioElement|null => {
+    return this.audio.audioElement
+  }
+
+  public loadMusic = () => {
+    this.option.music && this.audio.load(this.option.music)
   }
 }
 
