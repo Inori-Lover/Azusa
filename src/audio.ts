@@ -1,27 +1,22 @@
-import { EventEmitter } from 'events';
 import * as THREE from 'three';
 
 export interface IAudioOption {
   fftsize?: number
 }
 export interface loadOption {
-  src: string,
-  onLoad?: (buffer: THREE.AudioBuffer) => void
-  onPrgress?: (xhr: ProgressEvent) => void
-  onError?: () => void
+  src: string
 }
 
-export class Audio extends EventEmitter {
+export class Audio {
   public listener: THREE.AudioListener;
-  private sound: THREE.Audio;
-  private audioLoader: THREE.AudioLoader;
-  private analyser: THREE.AudioAnalyser;
+  public audioElement: HTMLAudioElement|null = null;
   public readonly frequencyBinCount: number;
+
+  private sound: THREE.Audio;
+  private analyser: THREE.AudioAnalyser;
   constructor(option: IAudioOption = {}) {
-    super()
     this.listener = new THREE.AudioListener();
     this.sound = new THREE.Audio(this.listener);
-    this.audioLoader = new THREE.AudioLoader();
     this.analyser = new THREE.AudioAnalyser(this.sound, option.fftsize || 256);
     this.frequencyBinCount = this.analyser.analyser.frequencyBinCount;
   }
@@ -30,21 +25,22 @@ export class Audio extends EventEmitter {
   ) {
     const {
       src,
-      onLoad = (buffer: THREE.AudioBuffer) => void(0),
-      onPrgress = (xhr: ProgressEvent) => void(0),
-      onError = () => void(0)
     } = option
-    this.audioLoader.load(src, (buffer: THREE.AudioBuffer) => {
-      this.sound.setBuffer(buffer);
-      this.sound.setLoop(true);
-      this.sound.play();
-      return onLoad(buffer);
-    }, onPrgress, onError);
-  }
-  public setVolume (volume:number) {
-    this.sound.setVolume(volume);
+
+    const audioElement: HTMLAudioElement = (document.getElementById('__AzusaAudio') as HTMLAudioElement) || document.createElement('audio')
+    audioElement.id = '__AzusaAudio'
+    audioElement.src = src
+    audioElement.style.display = 'none'
+    !document.getElementById('__AzusaAudio') && document.body.appendChild(audioElement)
+
+    // const AudioSourceNode = new MediaElementAudioSourceNode(this.sound.context, {
+    //   mediaElement: audioElement
+    // })
+    this.sound.setMediaElementSource(audioElement);
+    this.audioElement = audioElement
   }
   public getFrequencyData () {
     return this.analyser.getFrequencyData()
   }
+
 }
