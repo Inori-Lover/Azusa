@@ -98,7 +98,7 @@ export class Azusa {
 
     const composer = new THREE.EffectComposer(renderer)
     composer.setSize(width, height);
-    const renderScene = new THREE.RenderPass(scene, camera) // 6ms
+    const renderScene = new THREE.RenderPass(scene, camera)
     composer.addPass(renderScene);
     this.bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(width, height), 1.5, 0.2, 0);
     composer.addPass(this.bloomPass);
@@ -158,6 +158,10 @@ export class Azusa {
 
   private loadAudio = (camera: THREE.PerspectiveCamera, audio: Audio) => {
     camera.add(audio.listener);
+  }
+
+  private loadMusic = () => {
+    this.option.music && this.audio.load(this.option.music)
   }
 
   private loadTriangle = () => {
@@ -268,14 +272,6 @@ export class Azusa {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
     this.composer.setSize(width, height);
-  }
-
-  public getAudioElement = (): HTMLAudioElement|null => {
-    return this.audio.audioElement
-  }
-
-  public loadMusic = () => {
-    this.option.music && this.audio.load(this.option.music)
   }
 }
 

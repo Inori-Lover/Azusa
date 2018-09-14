@@ -4,12 +4,11 @@ export interface IAudioOption {
   fftsize?: number
 }
 export interface loadOption {
-  src: string
+  src: HTMLAudioElement
 }
 
 export class Audio {
   public listener: THREE.AudioListener;
-  public audioElement: HTMLAudioElement|null = null;
   public readonly frequencyBinCount: number;
 
   private sound: THREE.Audio;
@@ -27,17 +26,9 @@ export class Audio {
       src,
     } = option
 
-    const audioElement: HTMLAudioElement = (document.getElementById('__AzusaAudio') as HTMLAudioElement) || document.createElement('audio')
-    audioElement.id = '__AzusaAudio'
-    audioElement.src = src
-    audioElement.style.display = 'none'
-    !document.getElementById('__AzusaAudio') && document.body.appendChild(audioElement)
+    const audioElement = src
 
-    // const AudioSourceNode = new MediaElementAudioSourceNode(this.sound.context, {
-    //   mediaElement: audioElement
-    // })
     this.sound.setMediaElementSource(audioElement);
-    this.audioElement = audioElement
   }
   public getFrequencyData () {
     return this.analyser.getFrequencyData()

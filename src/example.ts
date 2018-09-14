@@ -12,16 +12,22 @@ const container = document.getElementById('bg')
 container && (container.style.backgroundImage = `url('${bgImg}')`)
 
 container && container.addEventListener('click', () => {
-  const azusa = new Azusa({
+
+  const audioElement: HTMLAudioElement = (document.getElementById('__AzusaAudio') as HTMLAudioElement) || document.createElement('audio')
+  audioElement.id = '__AzusaAudio'
+  audioElement.src = testSound
+  audioElement.style.display = 'none'
+  !document.getElementById('__AzusaAudio') && document.body.appendChild(audioElement)
+
+  new Azusa({
     view: document.getElementById('app') as HTMLCanvasElement,
     subdivisionSize: 1024,
     cutEnd: 256,
     music: {
-      src: testSound,
+      src: audioElement,
     }
   });
 
-  const audioElement = azusa.getAudioElement()
   audioElement && audioElement.play().then(function () {
     container.addEventListener('click', () => {
       audioElement && (audioElement.paused ? audioElement.play() : audioElement.pause())
