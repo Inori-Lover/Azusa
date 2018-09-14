@@ -11,7 +11,7 @@ import bgImg from "./static/9s.jpg";
 const container = document.getElementById('bg')
 container && (container.style.backgroundImage = `url('${bgImg}')`)
 
-container && container.addEventListener('touchstart', () => {
+container && container.addEventListener('click', () => {
   const azusa = new Azusa({
     view: document.getElementById('app') as HTMLCanvasElement,
     subdivisionSize: 1024,
@@ -22,7 +22,6 @@ container && container.addEventListener('touchstart', () => {
   });
 
   const audioElement = azusa.getAudioElement()
-  audioElement && checkAudioProgress(audioElement)
   audioElement && audioElement.play().then(function () {
     container.addEventListener('click', () => {
       audioElement && (audioElement.paused ? audioElement.play() : audioElement.pause())
@@ -33,26 +32,3 @@ container && container.addEventListener('touchstart', () => {
     audioElement && (audioElement.paused ? audioElement.play() : audioElement.pause())
   })
 }, {once: true})
-
-function checkAudioProgress (element: HTMLMediaElement) {
-  if (!!element.buffered) {
-    var halfAlert = false
-    var allAlert = false
-    const checkAudio = () => {
-      if (element.buffered.length > 0.5 && !halfAlert) {
-        alert('halfed')
-        halfAlert = true
-      } else if (element.buffered.length === 1 && !allAlert) {
-        alert('all')
-        allAlert = true
-        return
-      }
-      requestAnimationFrame(function () {
-        checkAudio()
-      })
-    }
-    requestAnimationFrame(function () {
-      checkAudio()
-    })
-  }
-}

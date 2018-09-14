@@ -29,10 +29,10 @@ export interface ExportedAzusaOption extends Partial<AzusaOption> {
 class Line extends THREE.Line{
   constructor (vertices: THREE.Vector2[], lineMaterial:THREE.LineBasicMaterial) {
 
-    const line = new THREE.BufferGeometry()
-    line.addAttribute('position', Line.creatBufferAttribute(vertices).setDynamic(true))
+    const lineGeometry = new THREE.BufferGeometry()
+    lineGeometry.addAttribute('position', Line.creatBufferAttribute(vertices).setDynamic(true))
 
-    super(line, lineMaterial)
+    super(lineGeometry, lineMaterial)
   }
 
   static creatBufferAttribute(vertices: THREE.Vector2[]) {
@@ -61,7 +61,6 @@ export class Azusa {
 
   private audio: Audio;
   private nodes: node[];
-  private scale: number = 1;
   private Triangles: Triangle[] = [];
   private option:AzusaOption;
 
@@ -99,9 +98,9 @@ export class Azusa {
 
     const composer = new THREE.EffectComposer(renderer)
     composer.setSize(width, height);
-    const renderScene = new THREE.RenderPass(scene, camera)
+    const renderScene = new THREE.RenderPass(scene, camera) // 6ms
     composer.addPass(renderScene);
-    this.bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.2, 0);
+    this.bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(width, height), 1.5, 0.2, 0);
     composer.addPass(this.bloomPass);
     const copyShader = new THREE.ShaderPass(THREE.CopyShader);
     copyShader.renderToScreen = true;
@@ -193,53 +192,46 @@ export class Azusa {
     return triangle;
   }
 
-  private updateGeometries = () => {
-    if (this.nodes) {
-      this.lineGroup.scale.set(this.scale, this.scale, this.scale);
-      const geometryA = this.lineA.geometry as THREE.BufferGeometry;
-      const AttributeA = geometryA.getAttribute('position') as THREE.BufferAttribute;
-      const geometryB = this.lineB.geometry as THREE.BufferGeometry;
-      const AttributeB = geometryB.getAttribute('position') as THREE.BufferAttribute;
+  private updateGeometries = (scale: number) => {
+    this.lineGroup.scale.set(scale, scale, scale);
+    const geometryA = this.lineA.geometry as THREE.BufferGeometry;
+    const AttributeA = geometryA.getAttribute('position') as THREE.BufferAttribute;
+    const geometryB = this.lineB.geometry as THREE.BufferGeometry;
+    const AttributeB = geometryB.getAttribute('position') as THREE.BufferAttribute;
 
-      const positions = this.nodes.map((value) => {
-        return [value.positionA, value.positionB];
-      });
-      positions.forEach((position, index) => {
-        AttributeA.set([position[0].x, position[0].y], index * 3);
-        AttributeB.set([position[1].x, position[1].y], index * 3);
-        const geometry = (this.lines[index].geometry as THREE.BufferGeometry);
-        const Attribute = geometry.getAttribute('position') as THREE.BufferAttribute;
-        Attribute.set(
-          [position[0].x, position[0].y, 0,
-          position[1].x, position[1].y, 0], 0
-        )
-        Attribute.needsUpdate = true;
-      })
-      AttributeA.set([AttributeA.array[0], AttributeA.array[1]], positions.length * 3);
-      AttributeB.set([AttributeB.array[0], AttributeB.array[1]], positions.length * 3);
-      AttributeA.needsUpdate = true;
-      AttributeB.needsUpdate = true;
-    }
+    const positions = this.nodes.map((value) => {
+      return [value.positionA, value.positionB];
+    });
+    positions.forEach((position, index) => {
+      AttributeA.set([position[0].x, position[0].y], index * 3);
+      AttributeB.set([position[1].x, position[1].y], index * 3);
+      const geometry = (this.lines[index].geometry as THREE.BufferGeometry);
+      const Attribute = geometry.getAttribute('position') as THREE.BufferAttribute;
+      Attribute.set(
+        [position[0].x, position[0].y, 0,
+        position[1].x, position[1].y, 0], 0
+      )
+      Attribute.needsUpdate = true;
+    })
+    AttributeA.set([AttributeA.array[0], AttributeA.array[1]], positions.length * 3);
+    AttributeB.set([AttributeB.array[0], AttributeB.array[1]], positions.length * 3);
+    AttributeA.needsUpdate = true;
+    AttributeB.needsUpdate = true;
   }
 
   private render = () => {
     this.composer.render();
-    {
-      let audioDate = this.audio.getFrequencyData()
-      const Delta = this.clock.getDelta();
-      const cutAudioDate = audioDate.slice(this.option.cutFront, audioDate.length - this.option.cutEnd)
-      this.nodes.forEach((node, index, array) => {
-        node.strength = cutAudioDate[(index) % array.length] * 0.1;
-        node.transition(Delta);
-      })
+    let audioDate = this.audio.getFrequencyData()
+    const Delta = this.clock.getDelta();
+    const cutAudioDate = audioDate.slice(this.option.cutFront, audioDate.length - this.option.cutEnd)
+    this.nodes.forEach((node, index, array) => {
+      node.strength = cutAudioDate[(index) % array.length] * 0.1;
+      node.transition(Delta);
+    })
 
-      this.scale = 1 + audioDate[Math.ceil(audioDate.length * 0.05)] / 1000;
-      this.updateGeometries();
-      this.Triangles.forEach(triangle => triangle.transition(Delta));
-    }
-    // geometries.forEach((geometry, index) => {
-    //   this.lines[index].geometry = geometry
-    // });
+    this.updateGeometries(1 + audioDate[Math.ceil(audioDate.length * 0.05)] / 1000);
+    this.Triangles.forEach(triangle => triangle.transition(Delta));
+
     requestAnimationFrame(this.render);
   }
 
