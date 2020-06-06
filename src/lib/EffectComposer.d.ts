@@ -16,13 +16,13 @@ declare namespace THREE {
     constructor();
 
     /** @default true */
-    readonly enabled: boolean;
+    enabled: boolean;
     /** @default true */
-    readonly needsSwap: boolean;
+    needsSwap: boolean;
     /** @default false */
-    readonly clear: boolean;
+    clear: boolean;
     /** @default false */
-    readonly renderToScreen: boolean;
+    renderToScreen: boolean;
 
     /** empty func */
     // setSize(): void;
