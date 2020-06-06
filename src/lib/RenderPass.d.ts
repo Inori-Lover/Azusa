@@ -5,7 +5,7 @@ declare namespace THREE {
     constructor(
       scene: THREE.Scene,
       camera: THREE.Camera,
-      overrideMaterial: THREE.Material | null,
+      overrideMaterial?: THREE.Material | null,
       clearColor?: THREE.Color | null,
       clearAlpha?: THREE.Color | null,
     );
