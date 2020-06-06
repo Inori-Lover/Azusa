@@ -1,7 +1,7 @@
 ///<reference types="three" />
 
 declare namespace THREE {
-  class ShaderPass {
+  class ShaderPass extends THREE.Pass {
     constructor(shader: THREE.ShaderMaterial | { uniforms: unknown }, textureID?: string);
 
     render(
