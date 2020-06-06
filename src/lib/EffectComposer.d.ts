@@ -7,7 +7,7 @@ declare namespace THREE {
     swapBuffers(): void;
     addPass(pass: unknown): void;
     insertPass(pass: unknown, index: unknown): void;
-    render(delta: unknown): void;
+    render(delta?: unknown): void;
     reset(renderTarget: unknown): void;
     setSize(width: unknown, height: unknown): void;
   }
