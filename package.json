@@ -17,7 +17,7 @@
     "@babel/core": "^7.10.2",
     "@babel/preset-env": "^7.10.2",
     "@types/node": "^14.0.11",
-    "@types/three": "^0.103.2",
+    "@types/three": "^0.92.18",
     "babel-loader": "^8.1.0",
     "declaration-bundler-webpack-plugin": "^1.0.3",
     "file-loader": "^6.0.0",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
-    "three": "^0.117.1",
+    "three": "^0.96.0",
     "tslib": "^2.0.0"
   },
   "types": "./lib/azusa.d.ts",
