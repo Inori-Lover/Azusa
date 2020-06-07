@@ -39,6 +39,9 @@ module.exports = {
     path: __dirname + "/example"
   },
 
+  // externals: {
+  //     three: 'THREE'
+  // },
 
     externals: {
         three: 'THREE'

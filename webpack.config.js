@@ -90,9 +90,9 @@ module.exports = {
         ]
     },
 
-    externals: {
-        three: 'THREE'
-    },
+  // externals: {
+  //   three: 'THREE',
+  // },
 
     devServer: {
 		port: process.env.PORT || 8888,

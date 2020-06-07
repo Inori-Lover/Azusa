@@ -25,9 +25,9 @@ module.exports = {
     umdNamedDefine: true,
   },
 
-    externals: {
-        three: 'THREE'
-    },
+  // externals: {
+  //   three: 'THREE',
+  // },
 
   devtool: "source-map",
 
