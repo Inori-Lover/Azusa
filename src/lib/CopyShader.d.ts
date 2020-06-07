@@ -2,8 +2,11 @@
 
 declare namespace THREE {
   const CopyShader: {
-    uniforms: any[];
-    vertexShader: any[];
-    fragmentShader: any[];
+    uniforms: {
+      tDiffuse: { value: any };
+      opacity: { value: number };
+    };
+    vertexShader: string;
+    fragmentShader: string;
   };
 }
