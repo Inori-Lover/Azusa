@@ -11,7 +11,7 @@ declare namespace THREE {
     );
 
     render(
-      renderer: THREE.Renderer,
+      renderer: THREE.WebGLRenderer,
       writeBuffer: unknown,
       readBuffer: unknown,
       delta?: unknown,

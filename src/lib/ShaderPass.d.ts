@@ -5,7 +5,7 @@ declare namespace THREE {
     constructor(shader: THREE.ShaderMaterial | { uniforms: unknown }, textureID?: string);
 
     render(
-      renderer: THREE.Renderer,
+      renderer: THREE.WebGLRenderer,
       writeBuffer: unknown,
       readBuffer: unknown,
       delta?: unknown,
