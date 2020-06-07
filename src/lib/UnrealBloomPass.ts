@@ -5,26 +5,41 @@
  */
 import * as THREE from 'three';
 
-class UnrealBloomPass<
-  Resolution = THREE.Vector2,
-  Strength = unknown,
-  Radius = unknown,
-  Threshold = unknown
-> extends THREE.Pass {
+class UnrealBloomPass extends THREE.Pass {
   static BlurDirectionX = new THREE.Vector2(1.0, 0.0);
   static BlurDirectionY = new THREE.Vector2(0.0, 1.0);
 
+  public resolution: THREE.Vector2;
+  public renderTargetsHorizontal: THREE.WebGLRenderTarget[];
+  public renderTargetsVertical: THREE.WebGLRenderTarget[];
+  public nMips: 5;
+  public renderTargetBright: THREE.WebGLRenderTarget;
+  public highPassUniforms: any;
+  public materialHighPassFilter: THREE.ShaderMaterial;
+  public separableBlurMaterials: THREE.ShaderMaterial[];
+  public compositeMaterial: THREE.ShaderMaterial;
+  public bloomTintColors: THREE.Vector3[];
+  public copyUniforms: any;
+  public materialCopy: THREE.ShaderMaterial;
+
+  /** @default true */
+  public enabled: boolean;
+  /** @default false */
+  public needsSwap: boolean;
+  public oldClearColor: THREE.Color;
+  public oldClearAlpha: number;
+  public camera: THREE.OrthographicCamera;
+  public scene: THREE.Scene;
+  public quad: THREE.Mesh;
+
   constructor(
     resolution?: { x: number; y: number },
-    strength?: Strength,
-    radius?: Radius,
-    threshold?: Threshold,
+    public strength: number = 1,
+    public radius?: unknown,
+    public threshold?: unknown,
   ) {
     super();
 
-    this.strength = strength !== undefined ? strength : 1;
-    this.radius = radius;
-    this.threshold = threshold;
     this.resolution =
       resolution !== undefined
         ? new THREE.Vector2(resolution.x, resolution.y)
@@ -149,16 +164,17 @@ class UnrealBloomPass<
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.scene = new THREE.Scene();
 
+    // @ts-ignore
     this.quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), null);
     this.quad.frustumCulled = false; // Avoid getting clipped
     this.scene.add(this.quad);
   }
 
   public dispose() {
-    for (var i = 0; i < this.renderTargetsHorizontal.length(); i++) {
+    for (var i = 0; i < this.renderTargetsHorizontal.length; i++) {
       this.renderTargetsHorizontal[i].dispose();
     }
-    for (var i = 0; i < this.renderTargetsVertical.length(); i++) {
+    for (var i = 0; i < this.renderTargetsVertical.length; i++) {
       this.renderTargetsVertical[i].dispose();
     }
     this.renderTargetBright.dispose();
@@ -182,9 +198,9 @@ class UnrealBloomPass<
   }
 
   public render(
-    renderer: THREE.Renderer,
+    renderer: THREE.WebGLRenderer,
     writeBuffer: unknown,
-    readBuffer: unknown,
+    readBuffer: any,
     delta?: unknown,
     maskActive?: unknown,
   ) {
